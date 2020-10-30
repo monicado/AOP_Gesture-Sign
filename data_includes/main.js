@@ -2,66 +2,104 @@
 PennController.ResetPrefix(null);
 PennController.InitiateRecorder("https://mondo1.dreamhosters.com/AudioRecordings/audiouploads.php");
 
-// PREFACE PAGE
-PennController(
-    newText("consent", "<p>You have been invited to take part in a research study about how people produce sentences. The study is being conducted by the Language Processing and Language Development Lab at the University of Pennsylvania.</p><p>You are being asked to complete this experiment because you are an adult (18 years or older) and you are native speaker of English (you learned English from birth and are a fluent speaker of English).</p><p>You will be asked to record your utterances in this study, so you must have a working microphone to participate. Your voice recordings and any information that you provide will be anonymous and kept confidential. You may withdraw from this study at any time without penalty. However, make sure you have a reliable internet connection and are able to complete the study in one sitting as too many missed trials can affect payment.</p><p>If you have questions about this research, or if you would like to receive a report of this research when it is completed, please contact the researcher Monica Do at monicado@sas.upenn.edu.</p><p><b>This study takes approximately 30 minutes</b> and you will be paid $5 for your participation.</p><p>By clicking 'I agree', you agree that you are <b>at least 18 years of age, that you are a native speaker of English, and that you understand these instructions and conditions of participation.</b></p>")
-        .print()
-    ,
-    newButton("I agree")
-        .print()
-        .wait()
-        .remove()
-    ,
-    getText("consent")
-        .remove()
-    ,
-    newText("instruct","<p>In this experiment, you will first watch some short, animated video clips. Once the animation is complete, you will describe what happened in the video to the person you see on the screen. The person you are talking to will be able to see some parts of each video –including the very beginning scene of each clip, <bold>but they are not allowed to see the rest of the video unfold.</bold></p><p>Your partner will let you know when they are finished viewing the beginning scene of each clip. Then, the animation will automatically start. There is no time limit or limitation on the number of words you can use. </p><p>Your recording will start automatically. When you are done speaking, press ‘Stop Recording’ to go to the next trial.</p><p>Before we begin, you do a mic check.</p>")   // Enter Instructions for the experiment here
-        .print()
-    ,
-    getText("instruct")
-        .remove()
-    ,
-    newText("IDenter","<p>Enter your MTurk ID.</p>")
-        .settings.center()
-        .print()
-    ,
-    newTextInput("ID")
-        .settings.center()
-        .print()
-    ,
-    newVar("ID")
-    .settings.global()
-    .set( getTextInput("ID") )
-    ,
-    getText("quickbrown")
-        .remove
-    ,
-    newText("quickbrown", "<p></p>Please test your mic for the experiment. If you cannot hear or make out your recording, neither can we and unfortunately, you will not be approved for payment. Say <i>The quick brown fox jumps over the lazy dog.</i> <p>Press the red record button to start recording. Press it again to stop your recording. Press play to hear your recording." )
-        .settings.center()
-        .print()
-    ,
-    newVoiceRecorder("mictest")
-        .settings.center()
-        .print()
-    ,
-    newButton("send", "Continue to example item.")
-        .settings.center()
-        .print()
-        .wait()
-    ,
-    getText("IDenter")
-        .remove()
-    ,
-    getTextInput("ID")
-        .remove()
-)
-.log( "ID" , getVar("ID") );
+Sequence("Consent", "Counter", "Instructions", "MicCheck", "PreloadVids","Practice", "MainExperiment", SendResults(),"EndScreen")
 
+
+// Preface
+newTrial("Consent",
+    newText("InclusionCriteria", "<b>You must be at least 18 years of age & a native speaker of American English to participate in this study.</b>")
+    .center()
+    .css({"font-size": "36px"})
+    .print()
+    ,
+    newImage("Consent","https://mondo1.dreamhosters.com/MTurkOnlineConsent_English_45mins.jpg")
+    .settings.size(794, 1123)
+    .print()
+    .center()
+    ,
+    newCanvas("agree", 800, 400)
+    .add(200, 0, newButton("Agree", "I agree"))
+    .add(400, 0, newButton("Disagree", "I do NOT agree"))
+    .center()
+    .print()
+    ,
+    newSelector("consentselect")
+    .add(getButton("Agree"), getButton("Disagree"))
+    .settings.log("all")
+    .wait()
+    ,
+    getSelector("consentselect")
+    .test.selected(getButton("Agree"))
+    .success(
+        getImage("Consent")
+        .remove()
+        ,
+        getSelector("consentselect")
+        .remove()
+        ,
+        getCanvas("agree")
+        .remove()
+        )
+    .failure(
+        getImage("Consent")
+        .remove()
+        ,
+        getSelector("consentselect")
+        .remove()
+        ,
+        getCanvas("agree")
+        .remove()
+        ,
+        newText("Exit", "You may exit the experiment by closing the window. Thank you for your consideration.")
+        .print()
+        .center()
+        .css({"font-size": "24px"})
+        .wait()
+        )
+)
+
+SetCounter("Counter", "inc", 1)
+
+newTrial("Instructions",
+    newText("InstructHeader", "INSTRUCTIONS")
+    .center()
+    .bold()
+    .css({"font-size": "24px"})
+    .print()
+    ,
+    newText("instruct","<p>In this experiment, you will watch some short video clips and then describe what happened in the video out loud. </p><p>There is no time limit or limitation on the number of words you can use. </p><p>Your recording will start automatically. When you are done speaking, press ‘Stop Recording’ to go to the next trial.</p><p>Before we begin, you will have the opportunity to go through three practice items. </p> <p> First, you will do a mic check.</p>")
+      .center()
+      .css({"font-size": "24px"})
+      .print()
+    ,
+    newButton("ContinuetoCheck", "Continue")
+        .settings.center()
+        .print()
+        .wait()
+        .remove()
+);
+
+newTrial("MicCheck",
+    newText("MicTest", "<p>Before we begin, please test your mic for the experiment. If you cannot hear or make out your recordings, neither can we and unfortunately, you will not be able to approve your HIT.</p> <p>Say <i>The quick brown fox jumps over the lazy dog.</i></p> <p>Press the <i>Record</i> button to start recording. Press it again to stop your recording. Press play to hear your recording.</p>")
+        .settings.center()
+        .css({"font-size": "24px"})
+        .print()
+    ,
+    newVoiceRecorder("MicCheck")
+        .settings.center()
+        .print()
+    ,
+    newButton("ContinueExamples", "Continue to example items.")
+        .settings.center()
+        .print()
+        .wait()
+        .remove()
+).setOption("hideProgressBar",true);
 
 PennController.PreloadZip("https://mondo1.dreamhosters.com/SoGo_AnimXPred_List1Items.zip")
 
 PennController.CheckPreloaded(3*60*1000) // wait up to 3 minutes for preload
-    .label("PreloadImages")
+    .label("PreloadVids")
 
 const replacePreloadingMessage = ()=>{
     const preloadingMessage = $(".PennController-PennController > div");
@@ -71,129 +109,100 @@ const replacePreloadingMessage = ()=>{
 };
 window.requestAnimationFrame( replacePreloadingMessage );
 
-//Example videos
-    newVideo("example", "ExampleItem_pres.mp4")
-    .settings.size(1000, 500)           // Size depends on the dimensions of the video. Change if needed.
-    .print()
-    ,
-    newFunction( ()=>getVideo("example")._element.jQueryElement.removeAttr("controls") ).call()
-    ,
-    newText("exText1", "This is an example item.")
+PennController.Template("PracticeItems.csv" ,
+    row => PennController(
+      newTrial("Practice",
+        newText("PracHeader", row.ItemNumb)
         .settings.css("font-size", "34px")
         .settings.css("color", "black")
         .settings.bold()
         .settings.center()
         .settings.css("margin-top", "30px")
         .print()
-    ,
-    getVideo("example")
-        .play()
-        .wait()
-        .remove()
-    ,
-    getText("exText1")
-        .remove()
-    ,
-    newVideo("example_targ", "ExampleItem_anim.mp4")
+        ,
+        newVideo("PracVid", row.VidID)
         .settings.size(1000, 500)           // Size depends on the dimensions of the video. Change if needed.
         .print()
-    ,
-    newFunction( ()=>getVideo("example_targ")._element.jQueryElement.removeAttr("controls") ).call()
-    ,
-    newText("exText2", "This is an example item.")
-        .settings.css("font-size", "34px")
-        .settings.css("color", "black")
-        .settings.bold()
-        .settings.center()
-        .settings.css("margin-top", "30px")
-        .print()
-    ,
-    getVideo("example_targ")
+        ,
+        newFunction( ()=>getVideo("PracVid")._element.jQueryElement.removeAttr("controls") ).call()
+        ,
+        getVideo("PracVid")
         .play()
         .wait()
-        .remove()
-    ,
-    getText("exText2")
-        .remove()
-    ,
-    newImage("Example_EndStill", "Example_EndStill.jpeg")
-        .settings.size(680, 500)
-        .settings.center()
-        .print()
-    ,
-    newText("exText3", "For the rest of the experiment, this is where you would start speaking.")
-        .settings.center()
+        ,
+        newText("Speak","Your recording has started. Say a sentence that describes what happened. Then, press <b>Continue</b> to see the next item.")
         .settings.css("font-size", "34px")
-        .settings.css("color", "black")
-        .settings.bold()
-        .settings.css("margin-top", "30px")
+        .center()
         .print()
-    ,
-    newTimer("exampleTimer", 5000)
-        .start()
         .wait()
-    ,
-    getText("exText3")
-      .remove()
-    ,
-        getImage("Example_EndStill")
+        ,
+        newButton("Continue", "Continue")
+        .print()
+        .wait()
         .remove()
-    ,
-    newText("<p> We are now ready to start. Videos in this experiment may take some time to load. Please be patient if your page appears to freeze. </p>")
-        .print()
-    ,
-    newButton("Start")
-        .print()
-        .wait()
+        ,
+        getVideo("PracVid")
+        .remove()
+        ,
+        getText("Prac1Header")
+        .remove()
+        ,
+        getText("Speak")
+        .remove()
+      )
+  )
+);
+
+newTrial("MainExperimentStart",
+  newText("ExperimentStart", "We are now ready to start the main experiment. Press <i>Start</i> to begin.")
+  .center()
+  .css({"font-size": "24px"})
+  .print()
+  ,
+  newButton("Start Experiment")
+  .center()
+  .print()
+  .wait()
+  ,
+  getText("ExperimentStart")
+  .remove()
+);
+
 
 // MAIN EXPERIMENT USING PENNCONTROLLER.TEMPLATE
 PennController.Template("sogo_itemList1.csv" ,
     row => PennController(
-    // MAIN EXPERIMENT PAGE 1
-    newVideo("pres", row.PresFilename)    // variable.URLName doesn't exist yet. URL for the video
+      newTrial("Main Experiment",
+        newVideo("TargetVid", row.TargID)    // variable.URLName doesn't exist yet. URL for the video
         .settings.size(1000,500)
         .print()
-    ,
-    newFunction( ()=>getVideo("pres")._element.jQueryElement.removeAttr("controls") ).call()
-    ,
-    getVideo("pres")
+        ,
+        newFunction( ()=>getVideo("TargetVid")._element.jQueryElement.removeAttr("controls") ).call()
+        ,
+        getVideo("TargetVid")
         .play()
         .wait()
         .remove()
-    ,
-
-    // MAIN EXPERIMENT PAGE 2
-    newVideo("anim", row.AnimFilename)    // variable.URLName doesn't exist yet. URL for the video
-        .settings.size(1000, 500)
-        .print()
-    ,
-    newFunction( ()=>getVideo("anim")._element.jQueryElement.removeAttr("controls") ).call()
-    ,
-    getVideo("anim")
-    .play()
-    .wait()
-    .remove()
-    ,
-    newImage("StillImage", row.EndStillFileName)
-        .settings.size(680, 500)
-        .print()
-   ,
-    newVoiceRecorder("recorder")
+        ,
+        newVoiceRecorder("recorder")
         .record()
-    ,
-    newButton("Stop recording")
+        ,
+        newButton("EndTrial", "End Recording & Continue")
         .settings.center()
         .print()
         .wait()
-    ,
-    getVoiceRecorder("recorder")
+        ,
+        getVoiceRecorder("recorder")
         .stop()
         .remove()
-    ,
-    getImage("StillImage")
+        ,
+        getVideo("TargetVid")
 	      .remove()
-    )
-.log( "ID" , getVar("ID") )
+      )
+.log( "ItemID" , row.TargID )
+.log( "OrderID" , row.OrderID)
+.log("ConditionID", row.ConditionID)
+  )
 );
 
 PennController.SendResults();
@@ -201,7 +210,7 @@ PennController.SendResults();
 
 //UPLOAD INSTRUCTIONS FIX THIS
 PennController(
-    newText("upload","<p>If your upload has been interrupted, you may download your recording file and email it to the University of Pennsylvania's Language Development & Language Processing Lab at monicado@sas.upenn.edu.</p>")
+    newText("upload","<p>If your upload has been interrupted, you may download your recording file and email it to the University of Chicago's Language Processing Lab at monicado@uchicago.edu.</p>")
     .print()
     ,
     newText("download", PennController.DownloadVoiceButton("Click here to download an archive of your recordings."))
@@ -218,11 +227,12 @@ PennController(
         .remove()
 );
 
-// END THANK YOU
-PennController(
-    newText("<p>Thank you for your participation! Please enter the following code on mturk to receive credit: 51936</p>")
+
+newTrial("EndScreen",
+    newText("<p>Thank you for your participation! If you have questions about this research, or if you would like to receive a report of this research when it is completed, you may contact the researcher Monica Do at monicado@uchicago.edu.</p><p><b>Please enter the following code on mturk to receive credit: 65836504 </b></p>")
+        .center()
         .print()
     ,
     newButton("void")
         .wait()
-).setOption("hideProgressBar",true);        // The progress bar should not be visible for this trial
+).setOption("hideProgressBar",true);
